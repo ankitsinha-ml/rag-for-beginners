@@ -8,7 +8,7 @@ from langchain_community.document_loaders import TextLoader, DirectoryLoader
 from langchain_text_splitters import CharacterTextSplitter
 
 #embeddings
-from langchain_community.embeddings import HuggingFaceEmbeddings 
+from langchain_huggingface import HuggingFaceEmbeddings 
 
 # vector store (Chroma)
 from langchain_chroma import Chroma
@@ -48,11 +48,66 @@ def load_documents(docs_path="docs"):
     return documents    
 
 
+def split_documents(documents,chunk_size=1000,chunk_overlap=0):
+    """Split documents into smaller chunks with overlap"""
+    print("Splitting documents into chunks...")
+
+    text_splitter = CharacterTextSplitter( #most basic text splitting class in langchain
+        chunk_size=chunk_size,
+        chunk_overlap=chunk_overlap
+    )
+
+    chunks = text_splitter.split_documents(documents)
+
+    if chunks:
+
+        for i, chunk in enumerate(chunks[:5]):
+            print(f"\n--- Chunk {i+1} ---")
+            print(f"Source: {chunk.metadata.get('source','N/A')}")
+            print(f"Length: {len(chunk.page_content)} characters")
+            print(f"Content:")
+            print(chunk.page_content)
+            print("-"*50)
+
+        if len(chunks) > 5:
+            print(f"\n... and {len(chunks) - 5} more chunks")
+
+    return chunks
+
+
+def create_vector_store(chunks, persist_directory="db/chroma_db"):
+    """Create and persist ChromaDB vector space"""
+    print("Creating embeddings and storing in ChromaDB")
+
+    embedding_model = HuggingFaceEmbeddings(model_name="sentence-transformers/all-MiniLM-L6-v2") 
+    
+    # create ChromaDB vector store
+    print("--- Creating vector store ---")
+    vectorstore = Chroma.from_documents(
+        documents=chunks,
+        embedding_function=embedding_model,
+        persist_directory=persist_directory,
+        collection_metadata={"hnsw:space":"cosine"}
+    )
+    print("--- Finished creating vector store ---")
+
+    print(f"Vector store created and saved to {persist_directory}")
+    return vectorstore
+
+
+
+
+
+
 def main():
     print("Main Function")
     
 
     #1. Loading the files
     documents = load_documents(docs_path="docs")
+    #2. Chunking of texts
+    chunks = split_documents(documents)
+    #3.&4. Embeddings&VectorDB
+    vectorstore = create_vector_store(chunks)
 if __name__ == "__main__":
     main()    
