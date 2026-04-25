@@ -1,14 +1,22 @@
 import os
 from dotenv import load_dotenv
 
-#document loaders
-from langhain_community.documents_loader import Textloader,DirectoryLoader
+# document loaders
+from langchain_community.document_loaders import TextLoader, DirectoryLoader
 
-#text splitter
-from langchain_text_splitters import characterTestSplitter
+# text splitter
+from langchain_text_splitters import CharacterTextSplitter
 
 #embeddings
-from langchain_openai import OpenAIEmbeddings
+from  langchain.embeddings import HuggingFaceEmbeddings
 
-#vector store(Chroma)
+# vector store (Chroma)
 from langchain_chroma import Chroma
+
+load_dotenv()
+
+def main():
+    print("Main Function")
+
+if __name__ == "__main__":
+    main()    
