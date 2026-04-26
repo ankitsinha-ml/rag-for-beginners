@@ -1,5 +1,2 @@
-def main():
-    print("Main Function")
 
-if __name__ == "__main__":
-    main()  
+# from langchain_huggingface import HuggingFaceEmbeddings

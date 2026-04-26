@@ -1,9 +1,9 @@
 from langchain_chroma import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
-
-from dotenv import load_dotenv
-
-load_dotenv()
+from langchain_huggingface import HuggingFacePipeline
+from transformers import pipeline
+from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, pipeline
+import torch 
 
 persist_directory="db/chroma_db"
 
@@ -36,4 +36,33 @@ print("--- Context ---")
 for i, doc in enumerate(relevant_docs, 1):
     print(f"Document {i}:\n{doc.page_content}\n")
 
+#safety check
+if not relevant_docs:
+    print("No relevant documents found.")
+    exit()
 
+#initialising llm (brain)
+tokenizer = AutoTokenizer.from_pretrained("google/flan-t5-base")
+model = AutoModelForSeq2SeqLM.from_pretrained("google/flan-t5-base")
+
+
+#limit context
+relevant_docs = relevant_docs[:2]
+context = "\n".join([doc.page_content for doc in relevant_docs])
+
+#prompt
+prompt = f"""Answer the question using only the context below. If the answer is not in the context, say "I don't know".
+
+Context:
+{context}
+
+Question:
+{query}
+
+Answer:"""
+
+inputs = tokenizer(prompt, return_tensors="pt", truncation=True, max_length=512)
+outputs = model.generate(**inputs, max_new_tokens=256)
+response = tokenizer.decode(outputs[0], skip_special_tokens=True)
+print("\nAnswer:")
+print(response)
